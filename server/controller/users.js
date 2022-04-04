@@ -25,6 +25,7 @@ module.exports = {
         return res.status(200).json({ data: userInfo });
       }
     } catch (err) {
+      console.log(err);
       return res.status(500).json({ message: 'Server Error' });
     }
   },
@@ -80,6 +81,7 @@ module.exports = {
         return res.status(200).json({ data: updateUserInfo });
       }
     } catch (err) {
+      console.log(err);
       return res.status(500).json({ message: 'Server Error' });
     }
     // 4. 중요한점은 비밀번호 수정 시 hashing 해줄 것
@@ -90,6 +92,7 @@ module.exports = {
       await User.destroy({ where: { id: req.userId } });
       return res.sendStatus(200);
     } catch (err) {
+      console.log(err);
       return res.status(500).json({ message: 'Server Error' });
     }
   },
