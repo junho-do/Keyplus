@@ -57,35 +57,24 @@ module.exports = {
         isAdmin,
         image,
       });
-      return res
-        .status(200)
-        .cookie('jwt', token, {
-          sameSite: 'Strict',
-          secure: true,
-          httpOnly: true,
-          expires: new Date(Date.now() + 1000 * 60 * 60 * 48),
-          // domain: '.keyplus.kr',
-        })
-        .json({ data: loginUserInfo });
+      return res.status(200).cookie('jwt', token).json({ data: loginUserInfo });
     } catch (err) {
+      console.log(err);
       return res.status(500).json({ message: 'Server Error' });
     }
   },
   logout: async (req, res) => {
     // 1. clearCookie
     try {
-      res.clearCookie('jwt', {
-        sameSite: 'Strict',
-        secure: true,
-        httpOnly: true,
-        // domain: '.keyplus.kr',
-      });
+      res.clearCookie('jwt');
       return res.sendStatus(200);
     } catch (err) {
+      console.log(err);
       return res.status(500).json({ message: 'Server Error' });
     }
   },
   signup: async (req, res) => {
+    console.log(req.file);
     // 1. email, nickname, password, image 를 클라이언트에서 받아온다.
     const { email, nickname, password } = req.body;
 
@@ -115,6 +104,7 @@ module.exports = {
       });
       return res.sendStatus(200);
     } catch (err) {
+      console.log(err);
       return res.sendStatus(500);
     }
   },
@@ -141,14 +131,16 @@ module.exports = {
           },
         }
       );
+      // console.log(userInfo);
+      //받아온 유저정보로 findOrCreate
       const user = await User.findOrCreate({
         where: {
           email: userInfo.data.email,
           socialType: 'google',
         },
         defaults: {
-          email: userInfo.data.email,
-          nickname: userInfo.data.name,
+          email: userInfo.data.email, // 구글에서 받아온 유저정보의 이메일
+          nickname: userInfo.data.name, // 구글에서 받아온 유저정보의 이름
           password: '',
           socialType: 'google',
           isAdmin: false,
@@ -164,13 +156,12 @@ module.exports = {
         isAdmin: user[0].dataValues.isAdmin,
         image: user[0].dataValues.image,
       });
+      console.log('====================token', token);
 
       res.cookie('jwt', token, {
-        sameSite: 'Strict',
-        secure: true,
+        sameSite: 'None',
         httpOnly: true,
-        expires: new Date(Date.now() + 1000 * 60 * 60 * 48),
-        // domain: '.keyplus.kr',
+        secure: true,
       });
 
       res.redirect(`${process.env.CLIENT_URI}/temp`);
@@ -186,6 +177,8 @@ module.exports = {
   naverCallback: async (req, res) => {
     const code = req.query.code;
     const state = req.query.state;
+    console.log('===================CODE', code);
+    console.log('===================STATE', state);
     try {
       const result = await axios.post(
         // authorization code를 이용해서 access token 요청
@@ -226,11 +219,9 @@ module.exports = {
       });
 
       res.cookie('jwt', token, {
-        sameSite: 'Strict',
-        secure: true,
+        sameSite: 'None',
         httpOnly: true,
-        expires: new Date(Date.now() + 1000 * 60 * 60 * 48),
-        // domain: '.keyplus.kr',
+        secure: true,
       });
 
       res.redirect(`${process.env.CLIENT_URI}/temp`);
@@ -245,12 +236,16 @@ module.exports = {
     );
   },
   kakaoCallback: async (req, res) => {
+    console.log(process.env.KAKAO_CLIENT_ID);
+    console.log(process.env.KAKAO_REDIRECT_URI);
     const code = req.query.code;
+    console.log('===================CODE', code);
     try {
       const result = await axios.post(
         // authorization code를 이용해서 access token 요청
         `https://kauth.kakao.com/oauth/token?grant_type=authorization_code&client_id=${process.env.KAKAO_CLIENT_ID}&redirect_uri=${process.env.KAKAO_REDIRECT_URI}&code=${code}`
       );
+      console.log('========result', result);
       const userInfo = await axios.get(
         // access token로 유저정보 요청
         'https://kapi.kakao.com/v2/user/me',
@@ -260,6 +255,7 @@ module.exports = {
           },
         }
       );
+      console.log('============USERINFO', userInfo);
       //받아온 유저정보로 findOrCreate
       const user = await User.findOrCreate({
         where: {
@@ -285,21 +281,22 @@ module.exports = {
       });
 
       res.cookie('jwt', token, {
-        sameSite: 'Strict',
-        secure: true,
+        sameSite: 'None',
         httpOnly: true,
-        expires: new Date(Date.now() + 1000 * 60 * 60 * 48),
-        // domain: '.keyplus.kr',
+        secure: true,
       });
 
       res.redirect(`${process.env.CLIENT_URI}/temp`);
     } catch (error) {
       console.error(error);
+      console.log('hihihihihi');
       res.sendStatus(500);
+      console.log('hihihihihi');
     }
   },
   validateEmail: async (req, res) => {
     // 1. Email 을 클라이언트에서 받아온 후, DB에 저장되어있는지 확인.
+    console.log('🌱🌱🌱🌱🌱', req.body);
     const { email } = req.body;
     const foundEmail = await User.findOne({ where: { email } });
     // 2. 저장되어있다면 오류메시지를 보내준다.
@@ -336,6 +333,7 @@ module.exports = {
         .status(200)
         .json({ data: { verificationCode: verificationCode } });
     } catch (err) {
+      console.log(err);
       return res.status(500).json({ message: 'Server Error' });
     }
   },
@@ -351,6 +349,7 @@ module.exports = {
       // 3. 저장되어있지않으면 OK 메시지
       return res.sendStatus(200);
     } catch (err) {
+      console.log(err);
       return res.status(500).json({ message: 'Server Error' });
     }
   },
