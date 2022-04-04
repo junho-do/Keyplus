@@ -1,25 +1,19 @@
-const { User, Keyboard, Review } = require('../models');
+const { User, Keyboard, Review, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 module.exports = {
   getAllKeyboards: async (req, res) => {
     // 1. 업로드되어있는 모든 키보드를 조회해서 클라이언트로 보내준다. ( findAll )
     try {
-      let reviewCount = [];
       const keyboardInfo = await Keyboard.findAll({
-        raw: true,
+        attributes: {
+          include: [
+            [sequelize.fn('COUNT', sequelize.col('Reviews.id')), 'reviewCount'],
+          ],
+        },
+        include: [{ attributes: [], model: Review }],
+        group: ['Keyboard.id'],
       });
-
-      for (let i = 0; i < keyboardInfo.length; i++) {
-        const reviewInfo = await Review.findAll({
-          where: {
-            keyboardId: keyboardInfo[i].id,
-          },
-          raw: true,
-        });
-        reviewCount = { reviewCount: reviewInfo.length };
-        Object.assign(keyboardInfo[i], reviewCount);
-      }
       return res.status(200).json({ data: keyboardInfo });
     } catch (error) {
       return res.status(500).json({ message: 'Server Error' });
