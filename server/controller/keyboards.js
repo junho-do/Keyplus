@@ -56,7 +56,7 @@ module.exports = {
       // 1. params 로 keyboardId를 받아온다.
       const keyboardId = req.params.id;
       // 2. 바아온 아이디로 특정 키보드를 조회한 후 클라이언트로 보내준다.
-      const getKeyboardReview = await Keyboard.findOne({
+      const getKeyboardReview = await Keyboard.findAll({
         where: {
           id: keyboardId,
         },
